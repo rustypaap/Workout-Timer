@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Workout Builder + Timer</title>
+<style>
+:root{--bg:#0f1115;--panel:#171a21;--panel2:#20242d;--text:#f5f7fa;--muted:#a7afbd;--accent:#ff6b35;--border:#303642;--good:#46c26f}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:920px;margin:auto;padding:18px}.card{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:16px}
+h1{margin:0 0 5px;font-size:clamp(28px,5vw,42px)}h2{margin:0 0 10px;font-size:20px}.muted{color:var(--muted)}
+.goalbox{display:grid;grid-template-columns:1fr auto;gap:10px}.goalbox input,.settings input,.row input{width:100%;min-height:46px;border:1px solid var(--border);border-radius:11px;background:var(--panel2);color:var(--text);font-size:16px;padding:10px 12px}
+button,.demo-link{min-height:46px;border:1px solid var(--border);border-radius:11px;background:var(--panel2);color:var(--text);font-size:16px;font-weight:800;padding:0 16px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}.quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.quick button{min-height:38px;font-size:14px;padding:0 11px}
+.toprow{display:flex;justify-content:space-between;gap:12px}.phase{text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-size:12px;font-weight:800}.title{font-size:clamp(24px,5vw,38px);font-weight:900;margin-top:4px}.badge{white-space:nowrap;border:1px solid var(--border);border-radius:999px;padding:8px 12px;font-weight:800}
+.timer{text-align:center;font:900 clamp(76px,18vw,140px)/1 ui-monospace,SFMono-Regular,Menlo,monospace;padding:26px 0 8px}.next{text-align:center;color:var(--muted);min-height:24px;margin-bottom:16px}.bar{height:12px;border-radius:999px;background:var(--panel2);overflow:hidden;margin-bottom:18px}.bar div{height:100%;background:var(--accent);width:100%;transition:width .25s linear}
+.controls{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}.settings{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+label{display:block;color:var(--muted);font-size:13px;font-weight:700;margin-bottom:5px}.list{display:grid;gap:9px;margin-top:12px}.row{display:grid;grid-template-columns:40px 1fr auto auto;gap:9px;align-items:center;padding:9px;border:1px solid var(--border);border-radius:12px}.row.active{border-color:var(--accent)}
+.num{width:34px;height:34px;border:1px solid var(--border);border-radius:50%;display:grid;place-items:center;font-weight:900}.remove{width:42px;padding:0;font-size:20px}.demo-link{min-height:40px;font-size:14px;padding:0 12px}.note{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.4}
+@media(max-width:640px){.goalbox{grid-template-columns:1fr}.settings{grid-template-columns:1fr}.row{grid-template-columns:34px minmax(0,1fr) auto}.row .remove{grid-column:3}.wrap{padding:12px}.demo-link{padding:0 10px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Workout Builder + Timer</h1>
+  <div class="muted">Type a goal, build the workout, then run the timer. Demo buttons open Fitness Blender in a new tab.</div>
+
+  <section class="card">
+    <h2>What do you want to work on?</h2>
+    <div class="goalbox">
+      <input id="goal" type="text" placeholder="Example: back + posture, glutes, full body strength...">
+      <button id="build" class="primary">Build Workout</button>
+    </div>
+    <div class="quick">
+      <button data-goal="back and posture">Back + Posture</button>
+      <button data-goal="glutes and legs">Glutes + Legs</button>
+      <button data-goal="upper body strength">Upper Body</button>
+      <button data-goal="full body strength">Full Body</button>
+    </div>
+    <div id="generatorMsg" class="note">Eight exercises is the default. You can change the count, names, work time, or rest time.</div>
+  </section>
+
+  <section class="card">
+    <div class="toprow">
+      <div><div id="phase" class="phase">Ready</div><div id="exerciseTitle" class="title">Exercise 1</div></div>
+      <div id="badge" class="badge">1 / 8</div>
+    </div>
+    <div id="timer" class="timer">5:00</div>
+    <div id="next" class="next">Press Start when you're ready.</div>
+    <div class="bar"><div id="progress"></div></div>
+    <div class="controls">
+      <button id="startPause" class="primary">Start Workout</button>
+      <a id="currentDemo" class="demo-link" href="https://www.fitnessblender.com/videos/browse" target="_blank" rel="noopener noreferrer">Demo</a>
+      <button id="skip">Skip</button>
+      <button id="reset">Reset</button>
+    </div>
+    <div style="display:flex;justify-content:center;margin-top:12px">
+      <label style="display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px">
+        <input id="soundEnabled" type="checkbox" checked> Sound on
+      </label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Workout settings</h2>
+    <div class="settings">
+      <div><label>Number of exercises</label><input id="count" type="number" min="1" max="20" value="8"></div>
+      <div><label>Work minutes</label><input id="workMinutes" type="number" min="1" max="60" value="5"></div>
+      <div><label>Rest minutes</label><input id="restMinutes" type="number" min="0" max="30" value="1"></div>
+    </div>
+    <div id="summary" class="note"></div>
+  </section>
+
+  <section class="card">
+    <div class="toprow">
+      <div><h2 style="margin:0">Your exercises</h2><div class="muted">Rename, add, remove, or tap Demo.</div></div>
+      <button id="add">+ Add</button>
+    </div>
+    <div id="exerciseList" class="list"></div>
+  </section>
+</div>
+
+<script>
+(()=>{
+const FB='https://www.fitnessblender.com/videos/browse';
+const URLS={
+  posture:'https://www.fitnessblender.com/videos/better-posture-workout-exercises-to-improve-posture-and-prevent-hunched-shoulders',
+  lower:'https://www.fitnessblender.com/videos/no-repeat-legs-and-glutes-strength-workout-quads-glutes-and-hamstrings',
+  lower2:'https://www.fitnessblender.com/videos/lower-body-strength-and-stability-with-dumbbells-and-isometrics',
+  upper:'https://www.fitnessblender.com/videos/upper-body-workout-for-great-shoulders-arms-back-chest-and-shoulder-workout',
+  upper2:'https://www.fitnessblender.com/videos/complete-upper-body-workout-for-strength-toning-arms-shoulders-chest-and-back-workout'
+};
+const demoMap={
+'Goblet Squat':URLS.lower,'Hip Thrust':URLS.lower,'Romanian Deadlift':URLS.lower,'Reverse Lunge':URLS.lower2,'Glute Bridge':URLS.lower,'Sumo Squat':URLS.lower,'Step-Up':URLS.lower2,'Split Squat':URLS.lower2,'Calf Raise':URLS.lower2,'Wall Sit':URLS.lower2,'Lateral Band Walk':URLS.lower,
+'One-Arm Dumbbell Row':URLS.upper2,'Dumbbell Row':URLS.upper2,'Incline Dumbbell Press':URLS.upper2,'Overhead Press':URLS.upper,'Lateral Raise':URLS.upper,'Rear-Delt Fly':URLS.upper,'Dumbbell Curl':URLS.upper2,'Lat Pulldown':URLS.upper2,'Farmer Carry':URLS.upper2,
+'Face Pull':URLS.posture,'Chest-Supported Row':URLS.posture,'Band Pull-Apart':URLS.posture,'Wall Slide':URLS.posture,'Straight-Arm Pulldown':URLS.posture,'Dead Bug':URLS.posture,'Bird Dog':URLS.posture
+};
+const pools={
+back:['One-Arm Dumbbell Row','Straight-Arm Pulldown','Chest-Supported Row','Lat Pulldown','Rear-Delt Fly','Face Pull','Bird Dog','Farmer Carry'],
+posture:['Face Pull','Rear-Delt Fly','Wall Slide','Band Pull-Apart','Chest-Supported Row','Straight-Arm Pulldown','Farmer Carry','Bird Dog'],
+glutes:['Hip Thrust','Goblet Squat','Romanian Deadlift','Reverse Lunge','Step-Up','Sumo Squat','Glute Bridge','Lateral Band Walk'],
+legs:['Goblet Squat','Reverse Lunge','Romanian Deadlift','Step-Up','Split Squat','Sumo Squat','Calf Raise','Wall Sit'],
+upper:['Incline Dumbbell Press','One-Arm Dumbbell Row','Overhead Press','Lat Pulldown','Lateral Raise','Dumbbell Curl','Rear-Delt Fly','Farmer Carry'],
+full:['Goblet Squat','Dumbbell Row','Incline Dumbbell Press','Hip Thrust','Romanian Deadlift','Overhead Press','Reverse Lunge','Farmer Carry']
+};
+let names=Array.from({length:8},(_,i)=>`Exercise ${i+1}`),index=0,phase='work',secondsLeft=300,running=false,interval=null,finished=false,countingDown=false,audioCtx=null;
+const $=id=>document.getElementById(id), clamp=(n,a,b)=>Math.max(a,Math.min(b,Number(n)||a));
+const workSec=()=>clamp($('workMinutes').value,1,60)*60, restSec=()=>clamp($('restMinutes').value,0,30)*60, fmt=s=>`${Math.floor(Math.max(0,s)/60)}:${String(Math.max(0,s)%60).padStart(2,'0')}`;
+function demoUrl(name){return demoMap[name]||FB}
+
+function getAudio(){
+  if(!$('soundEnabled').checked) return null;
+  const Ctx=window.AudioContext||window.webkitAudioContext;
+  if(!Ctx) return null;
+  if(!audioCtx) audioCtx=new Ctx();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
+}
+function tone(freq=850,duration=.14,volume=.17,type='sine'){
+  const ctx=getAudio(); if(!ctx) return;
+  const osc=ctx.createOscillator(), gain=ctx.createGain();
+  osc.type=type; osc.frequency.value=freq;
+  osc.connect(gain); gain.connect(ctx.destination);
+  gain.gain.setValueAtTime(volume,ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+duration);
+  osc.start(); osc.stop(ctx.currentTime+duration);
+}
+function boxingBell(){
+  const ctx=getAudio(); if(!ctx) return;
+  [620,930,1240].forEach((f,i)=>{
+    const osc=ctx.createOscillator(), gain=ctx.createGain();
+    osc.type='triangle'; osc.frequency.value=f;
+    osc.connect(gain); gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(.17/(i+1),ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+1.05);
+    osc.start(); osc.stop(ctx.currentTime+1.05);
+  });
+}
+function beginCountdown(){
+  if(countingDown) return;
+  stop();
+  countingDown=true;
+  let n=3;
+  $('phase').textContent='Get Ready';
+  $('exerciseTitle').textContent=names[index]||`Exercise ${index+1}`;
+  $('timer').textContent=String(n);
+  $('next').textContent='Starting...';
+  $('progress').style.width='100%';
+  tone(760,.13,.18);
+  const cd=setInterval(()=>{
+    n--;
+    if(n>0){
+      $('timer').textContent=String(n);
+      tone(n===1?1020:860,.13,.18);
+    }else{
+      clearInterval(cd);
+      countingDown=false;
+      phase='work';
+      secondsLeft=workSec();
+      running=true;
+      render(false);
+      interval=setInterval(tick,1000);
+    }
+  },1000);
+}
+function buildWorkout(text){
+  let t=(text||'full body').toLowerCase(),a=[];
+  if(t.includes('back'))a.push(...pools.back);
+  if(t.includes('posture'))a.push(...pools.posture);
+  if(t.includes('glute')||t.includes('hip'))a.push(...pools.glutes);
+  if(t.includes('leg')||t.includes('lower'))a.push(...pools.legs);
+  if(t.includes('upper')||t.includes('chest')||t.includes('arm')||t.includes('shoulder'))a.push(...pools.upper);
+  if(t.includes('full')||!a.length)a.push(...pools.full);
+  a=[...new Set(a.concat(pools.full))];
+  const n=clamp($('count').value,1,20);
+  names=a.slice(0,n); while(names.length<n)names.push(`Exercise ${names.length+1}`);
+  $('generatorMsg').textContent=`Built ${n} exercises for “${text||'full body'}.”`;
+  resetWorkout();
+}
+function renderList(){
+  const box=$('exerciseList');box.innerHTML='';
+  names.forEach((name,i)=>{
+    const row=document.createElement('div');row.className='row'+(!finished&&i===index?' active':'');
+    const num=document.createElement('div');num.className='num';num.textContent=i+1;
+    const inp=document.createElement('input');inp.type='text';inp.value=name;
+    inp.addEventListener('change',()=>{names[i]=inp.value.trim()||`Exercise ${i+1}`;render(false)});
+    const demo=document.createElement('a');demo.className='demo-link';demo.textContent='Demo';demo.href=demoUrl(name);demo.target='_blank';demo.rel='noopener noreferrer';
+    const rm=document.createElement('button');rm.className='remove';rm.textContent='×';rm.disabled=names.length<=1;
+    rm.addEventListener('click',()=>{names.splice(i,1);$('count').value=names.length;if(index>=names.length)index=names.length-1;resetWorkout()});
+    row.append(num,inp,demo,rm);box.appendChild(row);
+  });
+}
+function render(makeList=true){
+  $('badge').textContent=`${Math.min(index+1,names.length)} / ${names.length}`;
+  const currentName = phase==='rest' ? names[index+1] : names[index];
+  $('currentDemo').href=demoUrl(currentName||'');
+  if(finished){$('phase').textContent='Finished';$('exerciseTitle').textContent='Workout Complete';$('timer').textContent='0:00';$('next').textContent='Nice work.';$('progress').style.width='0%';$('startPause').textContent='Start Again'}
+  else if(phase==='work'){$('phase').textContent='Work';$('exerciseTitle').textContent=names[index];$('timer').textContent=fmt(secondsLeft);$('next').textContent=index===names.length-1?'Final exercise':`Next: ${$('restMinutes').value}:00 rest`;$('progress').style.width=(secondsLeft/workSec()*100)+'%';$('startPause').textContent=running?'Pause':(index===0&&secondsLeft===workSec()?'Start Workout':'Resume')}
+  else{$('phase').textContent='Rest';$('exerciseTitle').textContent='Rest';$('timer').textContent=fmt(secondsLeft);$('next').textContent=`Next: ${names[index+1]}`;$('progress').style.width=(secondsLeft/Math.max(1,restSec())*100)+'%';$('startPause').textContent=running?'Pause':'Resume'}
+  const total=names.length*workSec()+Math.max(0,names.length-1)*restSec();$('summary').textContent=`${names.length} exercises · ${$('workMinutes').value} min work · ${$('restMinutes').value} min rest · about ${Math.round(total/60)} minutes total`;
+  if(makeList)renderList();
+}
+function stop(){running=false;if(interval)clearInterval(interval);interval=null}
+function workEnded(){
+  boxingBell();
+  if(index>=names.length-1){
+    stop(); finished=true; secondsLeft=0; render(); return;
+  }
+  if(restSec()===0){
+    index++; phase='work'; secondsLeft=workSec(); render();
+    setTimeout(beginCountdown,500);
+  }else{
+    phase='rest'; secondsLeft=restSec(); render();
+  }
+}
+function restEnded(){
+  index++; phase='work'; secondsLeft=workSec(); render();
+  beginCountdown();
+}
+function advance(){
+  if(finished) return;
+  if(phase==='work') workEnded();
+  else restEnded();
+}
+function tick(){
+  if(!running)return;
+  secondsLeft--;
+  if(secondsLeft<=0){
+    if(phase==='work') workEnded();
+    else restEnded();
+  }else render(false);
+}
+function startTimer(){
+  getAudio();
+  if(finished) resetWorkout();
+  if(running||countingDown) return;
+  if(phase==='work' && secondsLeft===workSec()) beginCountdown();
+  else{
+    running=true; render(false); interval=setInterval(tick,1000);
+  }
+}
+function resetWorkout(){
+  stop(); countingDown=false; index=0; phase='work'; finished=false; secondsLeft=workSec(); render();
+}
+$('startPause').addEventListener('click',()=>{if(countingDown)return;running?(stop(),render(false)):startTimer()});
+$('skip').addEventListener('click',()=>{if(!finished)advance()});$('reset').addEventListener('click',resetWorkout);
+$('add').addEventListener('click',()=>{names.push(`Exercise ${names.length+1}`);$('count').value=names.length;render()});
+$('build').addEventListener('click',()=>buildWorkout($('goal').value.trim()));
+$('goal').addEventListener('keydown',e=>{if(e.key==='Enter')buildWorkout($('goal').value.trim())});
+document.querySelectorAll('[data-goal]').forEach(b=>b.addEventListener('click',()=>{$('goal').value=b.dataset.goal;buildWorkout(b.dataset.goal)}));
+$('count').addEventListener('change',()=>{const n=clamp($('count').value,1,20);$('count').value=n;while(names.length<n)names.push(`Exercise ${names.length+1}`);names=names.slice(0,n);resetWorkout()});
+$('workMinutes').addEventListener('change',resetWorkout);$('restMinutes').addEventListener('change',resetWorkout);
+render();
+})();
+</script>
+</body>
+</html>
