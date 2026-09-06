@@ -23,7 +23,7 @@ label{display:block;color:var(--muted);font-size:13px;font-weight:700;margin-bot
 <body>
 <div class="wrap">
   <h1>Workout Builder + Timer</h1>
-  <div class="muted">Type a goal, build the workout, then run the timer. Demo buttons open Fitness Blender in a new tab.</div>
+  <div class="muted">Type a goal, build the workout, then run the timer. Demo buttons open a quick exercise demonstration in a new tab.</div>
 
   <section class="card">
     <h2>What do you want to work on?</h2>
@@ -82,18 +82,35 @@ label{display:block;color:var(--muted);font-size:13px;font-weight:700;margin-bot
 
 <script>
 (()=>{
-const FB='https://www.fitnessblender.com/videos/browse';
-const URLS={
-  posture:'https://www.fitnessblender.com/videos/better-posture-workout-exercises-to-improve-posture-and-prevent-hunched-shoulders',
-  lower:'https://www.fitnessblender.com/videos/no-repeat-legs-and-glutes-strength-workout-quads-glutes-and-hamstrings',
-  lower2:'https://www.fitnessblender.com/videos/lower-body-strength-and-stability-with-dumbbells-and-isometrics',
-  upper:'https://www.fitnessblender.com/videos/upper-body-workout-for-great-shoulders-arms-back-chest-and-shoulder-workout',
-  upper2:'https://www.fitnessblender.com/videos/complete-upper-body-workout-for-strength-toning-arms-shoulders-chest-and-back-workout'
-};
+const DEMO_LIBRARY='https://musclewiki.com/';
 const demoMap={
-'Goblet Squat':URLS.lower,'Hip Thrust':URLS.lower,'Romanian Deadlift':URLS.lower,'Reverse Lunge':URLS.lower2,'Glute Bridge':URLS.lower,'Sumo Squat':URLS.lower,'Step-Up':URLS.lower2,'Split Squat':URLS.lower2,'Calf Raise':URLS.lower2,'Wall Sit':URLS.lower2,'Lateral Band Walk':URLS.lower,
-'One-Arm Dumbbell Row':URLS.upper2,'Dumbbell Row':URLS.upper2,'Incline Dumbbell Press':URLS.upper2,'Overhead Press':URLS.upper,'Lateral Raise':URLS.upper,'Rear-Delt Fly':URLS.upper,'Dumbbell Curl':URLS.upper2,'Lat Pulldown':URLS.upper2,'Farmer Carry':URLS.upper2,
-'Face Pull':URLS.posture,'Chest-Supported Row':URLS.posture,'Band Pull-Apart':URLS.posture,'Wall Slide':URLS.posture,'Straight-Arm Pulldown':URLS.posture,'Dead Bug':URLS.posture,'Bird Dog':URLS.posture
+'goblet squat':'https://musclewiki.com/exercise/dumbbell-goblet-squat',
+'hip thrust':'https://musclewiki.com/exercise/dumbbell-hip-thrust',
+'romanian deadlift':'https://musclewiki.com/exercise/dumbbell-romanian-deadlift',
+'reverse lunge':'https://musclewiki.com/exercise/dumbbell-reverse-lunge',
+'glute bridge':'https://musclewiki.com/exercise/glute-bridge',
+'sumo squat':'https://musclewiki.com/exercise/dumbbell-sumo-squat',
+'step-up':'https://musclewiki.com/exercise/dumbbell-step-up',
+'split squat':'https://musclewiki.com/exercise/dumbbell-split-squat',
+'calf raise':'https://musclewiki.com/exercise/calf-raises',
+'wall sit':'https://musclewiki.com/exercise/wall-sit',
+'lateral band walk':'https://musclewiki.com/exercise/side-walks-resisted',
+'one-arm dumbbell row':'https://musclewiki.com/exercise/dumbbell-single-arm-row',
+'dumbbell row':'https://musclewiki.com/exercise/dumbbell-single-arm-row',
+'incline dumbbell press':'https://musclewiki.com/exercise/dumbbell-incline-bench-press',
+'overhead press':'https://musclewiki.com/exercise/dumbbell-overhead-press',
+'lateral raise':'https://musclewiki.com/exercise/dumbbell-lateral-raise',
+'rear-delt fly':'https://musclewiki.com/exercise/dumbbell-rear-delt-fly',
+'dumbbell curl':'https://musclewiki.com/exercise/dumbbell-curl',
+'lat pulldown':'https://musclewiki.com/exercise/machine-pulldown',
+'farmer carry':'https://musclewiki.com/exercise/dumbbell-farmer-walk',
+'face pull':'https://musclewiki.com/exercise/machine-face-pulls',
+'chest-supported row':'https://musclewiki.com/exercise/dumbbell-laying-incline-row',
+'band pull-apart':'https://musclewiki.com/exercise/band-pull-apart',
+'wall slide':'https://www.muscleandstrength.com/exercises/scapular-wall-slide',
+'straight-arm pulldown':'https://www.muscleandstrength.com/exercises/straight-arm-lat-pull-down.html',
+'dead bug':'https://musclewiki.com/exercise/dead-bug',
+'bird dog':'https://musclewiki.com/exercise/bird-dog'
 };
 const pools={
 back:['One-Arm Dumbbell Row','Straight-Arm Pulldown','Chest-Supported Row','Lat Pulldown','Rear-Delt Fly','Face Pull','Bird Dog','Farmer Carry'],
@@ -106,7 +123,7 @@ full:['Goblet Squat','Dumbbell Row','Incline Dumbbell Press','Hip Thrust','Roman
 let names=Array.from({length:8},(_,i)=>`Exercise ${i+1}`),index=0,phase='work',secondsLeft=300,running=false,interval=null,finished=false,countingDown=false,audioCtx=null;
 const $=id=>document.getElementById(id), clamp=(n,a,b)=>Math.max(a,Math.min(b,Number(n)||a));
 const workSec=()=>clamp($('workMinutes').value,1,60)*60, restSec=()=>clamp($('restMinutes').value,0,30)*60, fmt=s=>`${Math.floor(Math.max(0,s)/60)}:${String(Math.max(0,s)%60).padStart(2,'0')}`;
-function demoUrl(name){return demoMap[name]||FB}
+function demoUrl(name){return demoMap[String(name||'').trim().toLowerCase()]||DEMO_LIBRARY}
 
 function getAudio(){
   if(!$('soundEnabled').checked) return null;
